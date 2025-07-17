@@ -4,6 +4,8 @@ import sys
 import json
 import signal
 import time
+import urllib.request
+import urllib.parse
 
 def debug(msg):
     print(f"[DEBUG] {msg}", file=sys.stderr)
@@ -42,6 +44,19 @@ def send_tool_declaration():
                             "text": {"type": "string"}
                         },
                         "required": ["text"]
+                    }
+                },
+                "weather": {
+                    "description": "Get current weather for a city (defaults to Frisco, Colorado)",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "city": {
+                                "type": "string",
+                                "description": "City name (e.g., 'Las Vegas' or 'Denver')"
+                            }
+                        },
+                        "required": []
                     }
                 }
             }
@@ -157,6 +172,44 @@ try:
                             "id": req_id,
                             "result": {
                                 "content": [{"type": "text", "text": result}]
+                            }
+                        }
+                    elif tool_name == "weather":
+                        city = req.get("params", {}).get("arguments", {}).get("city", "Frisco, Colorado")
+                        
+                        try:
+                            # Using free weather API (no key required) with urllib
+                            city_encoded = urllib.parse.quote(city)
+                            url = f"https://wttr.in/{city_encoded}?format=j1"
+                            
+                            with urllib.request.urlopen(url, timeout=10) as response_data:
+                                if response_data.status == 200:
+                                    weather_data = json.loads(response_data.read().decode())
+                                    current = weather_data["current_condition"][0]
+                                    
+                                    # Format weather info for your hometown!
+                                    weather_info = f"""🌤️ Weather for {city}:
+🌡️ Temperature: {current['temp_F']}°F ({current['temp_C']}°C)
+🌤️ Condition: {current['weatherDesc'][0]['value']}
+💨 Wind: {current['windspeedMiles']} mph
+💧 Humidity: {current['humidity']}%
+👁️ Visibility: {current['visibility']} miles
+
+Perfect for checking your hometown weather! 🏔️❄️"""
+                                
+                                else:
+                                    weather_info = f"❌ Sorry, couldn't get weather for {city}. Try a different city name!"
+                                    
+                        except urllib.error.URLError as e:
+                            weather_info = f"🌐 Network error getting weather: {str(e)}"
+                        except Exception as e:
+                            weather_info = f"⚠️ Error processing weather data: {str(e)}"
+                        
+                        response = {
+                            "jsonrpc": "2.0",
+                            "id": req_id,
+                            "result": {
+                                "content": [{"type": "text", "text": weather_info}]
                             }
                         }
                     else:
