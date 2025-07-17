@@ -33,6 +33,16 @@ def send_tool_declaration():
                         },
                         "required": ["text"]
                     }
+                },
+                "word_count": {
+                    "description": "Count words, characters, and lines in text",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "text": {"type": "string"}
+                        },
+                        "required": ["text"]
+                    }
                 }
             }
         }
@@ -124,6 +134,29 @@ try:
                             "id": req_id,
                             "result": {
                                 "content": [{"type": "text", "text": f"Reversed: {reversed_text}"}]
+                            }
+                        }
+                    elif tool_name == "word_count":
+                        text = req.get("params", {}).get("arguments", {}).get("text", "")
+                        
+                        # Count different metrics
+                        word_count = len(text.split()) if text.strip() else 0
+                        char_count = len(text)
+                        char_count_no_spaces = len(text.replace(" ", ""))
+                        line_count = len(text.splitlines()) if text else 0
+                        
+                        # Format the response
+                        result = f"""Text Analysis:
+📝 Words: {word_count}
+🔤 Characters: {char_count}
+🔤 Characters (no spaces): {char_count_no_spaces}
+📄 Lines: {line_count}"""
+                        
+                        response = {
+                            "jsonrpc": "2.0",
+                            "id": req_id,
+                            "result": {
+                                "content": [{"type": "text", "text": result}]
                             }
                         }
                     else:
