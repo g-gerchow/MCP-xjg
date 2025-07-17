@@ -23,6 +23,16 @@ def send_tool_declaration():
                         },
                         "required": ["message"]
                     }
+                },
+                "reverse": {
+                    "description": "Reverse the order of characters in text",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "text": {"type": "string"}
+                        },
+                        "required": ["text"]
+                    }
                 }
             }
         }
@@ -42,18 +52,15 @@ signal.signal(signal.SIGINT, signal_handler)
 try:
     debug("Server starting, waiting for messages...")
     
-    # Make stdin non-blocking and handle connection state
     initialized = False
     
     while True:
         try:
             line = sys.stdin.readline()
             
-            # If readline returns empty string, stdin is closed
             if not line:
                 if initialized:
                     debug("Stdin closed after successful initialization - keeping server alive")
-                    # Keep the server running even if stdin closes
                     try:
                         while True:
                             time.sleep(1)
@@ -74,7 +81,6 @@ try:
             req_id = req.get("id")
 
             if method == "initialize":
-                # Only respond if there's an ID (this is a request, not a notification)
                 if req_id is not None:
                     response = {
                         "jsonrpc": "2.0",
@@ -94,16 +100,13 @@ try:
                     sys.stdout.flush()
                     debug("Initialization response sent")
                 
-                # Mark as initialized
                 initialized = True
-                
-                # Now send tool declaration
                 send_tool_declaration()
                 
             elif method == "tools/call":
-                # Only respond if there's an ID
                 if req_id is not None:
                     tool_name = req.get("params", {}).get("name")
+                    
                     if tool_name == "echo":
                         message = req.get("params", {}).get("arguments", {}).get("message", "")
                         response = {
@@ -111,6 +114,16 @@ try:
                             "id": req_id,
                             "result": {
                                 "content": [{"type": "text", "text": f"Echo: {message}"}]
+                            }
+                        }
+                    elif tool_name == "reverse":
+                        text = req.get("params", {}).get("arguments", {}).get("text", "")
+                        reversed_text = text[::-1]
+                        response = {
+                            "jsonrpc": "2.0",
+                            "id": req_id,
+                            "result": {
+                                "content": [{"type": "text", "text": f"Reversed: {reversed_text}"}]
                             }
                         }
                     else:
@@ -127,7 +140,6 @@ try:
                     debug("Tool call response sent")
                 
             else:
-                # Only send error response if there's an ID
                 if req_id is not None:
                     response = {
                         "jsonrpc": "2.0",
