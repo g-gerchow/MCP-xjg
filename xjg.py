@@ -116,7 +116,7 @@ try:
                                 "tools": {}
                             },
                             "serverInfo": {
-                                "name": "xjg-server",
+                                "name": "frisco-weather-server",
                                 "version": "1.0.0"
                             }
                         }
@@ -127,6 +127,67 @@ try:
                 
                 initialized = True
                 send_tool_declaration()
+                
+            elif method == "tools/list":
+                if req_id is not None:
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": req_id,
+                        "result": {
+                            "tools": [
+                                {
+                                    "name": "echo",
+                                    "description": "Echo back text",
+                                    "inputSchema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "message": {"type": "string"}
+                                        },
+                                        "required": ["message"]
+                                    }
+                                },
+                                {
+                                    "name": "reverse",
+                                    "description": "Reverse the order of characters in text",
+                                    "inputSchema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "text": {"type": "string"}
+                                        },
+                                        "required": ["text"]
+                                    }
+                                },
+                                {
+                                    "name": "word_count",
+                                    "description": "Count words, characters, and lines in text",
+                                    "inputSchema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "text": {"type": "string"}
+                                        },
+                                        "required": ["text"]
+                                    }
+                                },
+                                {
+                                    "name": "weather",
+                                    "description": "Get current weather for a city (defaults to Frisco, Colorado)",
+                                    "inputSchema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "city": {
+                                                "type": "string",
+                                                "description": "City name (e.g., 'Las Vegas' or 'Denver')"
+                                            }
+                                        },
+                                        "required": []
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                    print(json.dumps(response))
+                    sys.stdout.flush()
+                    debug("Tools list response sent")
                 
             elif method == "tools/call":
                 if req_id is not None:
